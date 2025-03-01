@@ -1,0 +1,6 @@
+glcontext==3.0.0
+moderngl==5.12.0
+numpy==2.2.3
+pillow==11.1.0
+pygame==2.6.1
+thorpy==2.1.11

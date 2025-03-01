@@ -1,5 +1,4 @@
 import pygame, sys
-import thorpy as tp
 from pygame.locals import *
 
 from imports import *
@@ -18,13 +17,12 @@ class Menu(States):
     def __init__(self):
         States.__init__(self)
         self.next = 'game'
-    
+
     def cleanup(self):
         #TODO
         pass
 
     def startup(self):
-        #TODO
         pass
 
     #Move to next state if mouse button click
@@ -47,11 +45,7 @@ class Control:
         self.screen = pygame.display.set_mode(self.size)
         self.screen_rect = self.screen.get_rect()
         self.clock = pygame.time.Clock()
-        pygame.display.set_caption('Speed: Card Game (52CardEngine)')
-        self.state_dict = {
-            'menu': Menu(),
-            'game': Speed(),
-        }
+        pygame.display.set_caption('Speed: Card Game')
 
     #Take in dicitonary of states, store name of start state
     def setup_states(self, state_dict, start_state):
@@ -261,6 +255,7 @@ def main() -> None:
     app = Control(**settings)
     app.setup_states(state_dict, 'menu')
     app.main_game_loop()
+    handle_quit()
 
 if __name__ == '__main__':
     main()
