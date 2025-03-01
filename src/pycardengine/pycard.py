@@ -424,7 +424,7 @@ class Deck:
         c.offset_pos.x = 0
         c.offset_pos.y = 0
         self.deck.remove(c)
-
+    
     def draw(self, display_surface: pygame.Surface) -> None:
         """
         Render all Cards in deck using the stack_offset to display_surface.
