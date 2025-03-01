@@ -14,3 +14,5 @@ BLUE = (0,0,255)
 WHITE = (255,255,255)
 
 BG_COLOR = BLACK
+
+CAPTION = 'Speed: Card Game (52CardEngine)'
