@@ -1,11 +1,90 @@
 import pygame, sys
+import thorpy as tp
 from pygame.locals import *
 
 from imports import *
-from rendering.renderer import Renderer 
 import pycardengine.pycard as pycard
 
-class Speed:
+class States:
+    #Stores super class attributes of current state (running, done, quit) and which state is before or after current
+    def __init__(self):
+        self.done = False 
+        self.next = None
+        self.quit = False 
+        self.previous = None
+    
+class Menu(States):
+    # Menu always comes before Game
+    def __init__(self):
+        States.__init__(self)
+        self.next = 'game'
+    
+    def cleanup(self):
+        #TODO
+        pass
+
+    def startup(self):
+        #TODO
+        pass
+
+    #Move to next state if mouse button click
+    def get_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.done = True
+    
+    #Constantly draw a blank poker table until user mouse click
+    def update(self, screen, dt):
+        self.draw(screen)
+    
+    def draw(self, screen):
+        screen.fill(POKER_GREEN)
+
+class Control:
+    def __init__(self, **settings):
+        self.__dict__.update(settings)
+        self.done = False 
+        #Initialize window and FPS clock
+        self.screen = pygame.display.set_mode(self.size)
+        self.clock = pygame.time.Clock()
+
+    #Take in dicitonary of states, store name of start state
+    def setup_states(self, state_dict, start_state):
+        self.state_dict = state_dict
+        self.state_name = start_state
+
+        #using class __dict__ to access object as member of dictionary
+        self.state = self.state[dict[self.state_name]]
+    
+    def flip_state(self):
+        #
+        self.state.done = False 
+        previous, self.state_name = self.state_name, self.state.next
+        self.state.cleanup()
+        self.state = self.state_dict[self.state_name]
+        self.state.startup()
+        self.state.previous = previous
+    
+    def update(self, dt):
+        if self.state.quit:
+            self.done = True 
+        elif self.state.done:
+            self.flip_state()
+        self.state.update(self.screen,dt)
+    
+    def event_loop(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.done = True
+            self.state.get_event(event)
+        
+    def main_game_loop(self):
+        while not self.done:
+            delta = self.clock.tick(self.fps) / 1000.0
+            self.event_loop() 
+            self.update(delta)
+            pygame.display.update()
+
+class Speed():
     def __init__(self):
         table = pycard.Table()
         #CENTER LEFT AND CENTER RIGHT DESKS FOR FLIPPING CARDS BEFORE EACH ROUND; 6 CARDS EACH
@@ -86,8 +165,6 @@ class Speed:
                 d.append_top(c)
                 self.table.deal_to_top(name, 'center_flipped_2')
             
-    
-    
     def is_legal_turn(self, card : pycard.Card, dest_deck : pycard.Deck) -> bool:
         top_card = self.table[dest_deck].get_top_card().rank 
         return (card.rank in {top_card + 1, top_card - 1}) or ({card.rank, top_card} == {1,13})
@@ -107,10 +184,12 @@ class Speed:
         elif len(opponent_deck) == 0 and len(opponent_hand) == 0:
             print("OPPONENT WON")
 
+        #Deals card from deck if hand has less than 5 cards
         if len(self.table['user_deck']) > 0 and len(self.table['user_hand']) < 5:
             self.table.deal_to_top('user_deck','user_hand')
         elif len(self.table['opponent_deck']) > 0 and len(self.table['opponent_hand']) < 5:
             self.table.deal_to_top('opponent_deck', 'opponent_hand')
+
         #Check if there are no more legal turns on either user or opponent hand 
         user_no_turns = True
         opponent_no_turns = True
@@ -125,6 +204,7 @@ class Speed:
                 opponent_no_turns = False
                 break
         
+        #No legal turns => next round starts with a flipped card from both center decks
         if user_no_turns and opponent_no_turns:
             self.table.deal_to_top('center_deck_1', 'center_flipped_1')
             self.table.deal_to_top('center_deck_2', 'center_flipped_2')
@@ -132,7 +212,6 @@ class Speed:
 
         self.table.update(dt)
     
-""" Deactivates PyGame and triggers exit() system call """
 def handle_quit() -> None:
     pygame.quit()
     sys.exit()
@@ -146,8 +225,6 @@ def main() -> None:
     pygame.display.set_caption('Speed: Card Game (52CardEngine)')
     FPS_CLOCK = pygame.time.Clock()
 
-    font = pygame.font.Font('freesansbold.ttf', 32)
-    
     delta : float 
     t : float = 0
     offset : float = 0
@@ -160,26 +237,21 @@ def main() -> None:
 
         display_surface.fill(POKER_GREEN)
         
-        mxy = mx , my = pygame.mouse.get_pos()
+        mxy = pygame.mouse.get_pos()
         #EVENT HANDLER
         for event in pygame.event.get():
             match event.type:
                 case pygame.QUIT:
                     handle_quit()
-                    
                 case pygame.MOUSEBUTTONDOWN:
                     match event.dict['button']:
                         case 1:
                             speed.interact(mxy)
-                    
-                
         speed.draw(display_surface, offset)
         speed.update(delta)
-
         #UPDATE
         pygame.display.update()
         FPS_CLOCK.tick(FPS)
-
 
 if __name__ == '__main__':
     main()
